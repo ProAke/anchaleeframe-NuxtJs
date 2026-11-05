@@ -1,0 +1,35 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set MARIADB_ROOT_PASSWORD in .env}
+      MARIADB_DATABASE: ${NUXT_DATABASE_NAME:-anchalee_frame}
+      MARIADB_USER: ${NUXT_DATABASE_USER:-anchalee_app}
+      MARIADB_PASSWORD: ${NUXT_DATABASE_PASSWORD:?Set NUXT_DATABASE_PASSWORD in .env}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      NUXT_DATABASE_HOST: mariadb
+      NUXT_DATABASE_PORT: 3306
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+volumes:
+  mariadb_data:
