@@ -7,10 +7,11 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<any>(event)
   const orderId = Number(body?.orderId)
   const carrier = String(body?.carrier || '').trim().slice(0, 80)
-  const trackingNo = String(body?.trackingNo || '').trim().slice(0, 100)
+  const enteredTrackingNo = String(body?.trackingNo || '').trim().slice(0, 100)
+  const trackingNo = enteredTrackingNo || (carrier === 'รถบริษัทอัญชลี' ? 'ติดต่อนัดหมายกับร้าน' : '')
   const note = String(body?.note || '').trim().slice(0, 400)
   if (!Number.isSafeInteger(orderId) || orderId < 1 || !carrier || !trackingNo) {
-    throw createError({ statusCode: 400, statusMessage: 'กรุณาเลือกคำสั่งซื้อ พร้อมระบุขนส่งและเลขพัสดุ' })
+    throw createError({ statusCode: 400, statusMessage: 'กรุณาเลือกคำสั่งซื้อ พร้อมระบุข้อมูลขนส่ง' })
   }
   const db = await getDatabase()
   if (!db) {

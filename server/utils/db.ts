@@ -92,6 +92,8 @@ async function initializeSchema(db: Pool) {
       status VARCHAR(24) NOT NULL DEFAULT 'pending',
       payment_status VARCHAR(24) NOT NULL DEFAULT 'unpaid',
       payment_method VARCHAR(24) NOT NULL DEFAULT 'cod',
+      shipping_method VARCHAR(32) NOT NULL DEFAULT 'private_carrier',
+      shipping_zone VARCHAR(32) NOT NULL DEFAULT 'other',
       subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
       shipping_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
       total DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -150,6 +152,25 @@ async function initializeSchema(db: Pool) {
       setting_value TEXT NOT NULL,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS customer_accounts (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      line_user_id VARCHAR(80) NOT NULL UNIQUE,
+      display_name VARCHAR(160) NOT NULL DEFAULT '',
+      email VARCHAR(190) NOT NULL DEFAULT '',
+      picture_url VARCHAR(800) NOT NULL DEFAULT '',
+      phone VARCHAR(40) NOT NULL DEFAULT '',
+      address TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS customer_sessions (
+      token_hash CHAR(64) NOT NULL PRIMARY KEY,
+      customer_id BIGINT UNSIGNED NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_customer_sessions_expiry (expires_at),
+      CONSTRAINT fk_customer_session_account FOREIGN KEY (customer_id) REFERENCES customer_accounts(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS admin_users (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       email VARCHAR(190) NOT NULL UNIQUE,
@@ -171,6 +192,9 @@ async function initializeSchema(db: Pool) {
 
   for (const statement of statements) await db.query(statement)
   await db.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(800) NULL AFTER image_key')
+  await db.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_method VARCHAR(32) NOT NULL DEFAULT 'private_carrier' AFTER payment_method")
+  await db.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_zone VARCHAR(32) NOT NULL DEFAULT 'other' AFTER shipping_method")
+  await db.query("UPDATE orders SET payment_method = 'bank_transfer' WHERE payment_method = 'transfer'")
 
   const categories = [
     ['ready-frames', 'กรอบสำเร็จรูป', 1],

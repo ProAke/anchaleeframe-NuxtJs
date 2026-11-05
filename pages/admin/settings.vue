@@ -4,7 +4,14 @@ const { data, pending, error, refresh } = await useFetch<any>('/api/admin/settin
 const toast = useToast()
 const saving = ref(false)
 const formError = ref('')
-const form = reactive({ storeName: '', supportEmail: '', supportPhone: '', announcementText: '', lineUrl: '' })
+const form = reactive({
+  storeName: '', supportEmail: '', supportPhone: '', announcementText: '', lineUrl: '',
+  promptPayEnabled: false, promptPayId: '',
+  bankTransferEnabled: false, bankName: '', bankAccountName: '', bankAccountNumber: '',
+  otherPaymentEnabled: false, otherPaymentName: '', otherPaymentInstructions: '', otherPaymentUrl: '',
+  companyTruckEnabled: true, companyTruckFee: 150, companyTruckFreeThreshold: 10000,
+  privateCarrierEnabled: true, privateCarrierFee: 120,
+})
 watch(() => data.value?.settings, (settings) => { if (settings) Object.assign(form, settings) }, { immediate: true })
 async function saveSettings() {
   saving.value = true
@@ -43,15 +50,42 @@ async function saveSettings() {
             </form>
           </section>
           <section class="admin-panel settings-panel">
-            <div class="settings-section-heading"><span class="settings-section-icon settings-shipping-icon"><AppIcon name="truck" :size="19"/></span><div><h2>การจัดส่งและชำระเงิน</h2><p>แนวทางที่อ้างอิงจากเว็บไซต์อัญชลีกรอบรูป</p></div></div>
-            <div class="settings-rules">
-              <div><span><AppIcon name="gift" :size="16"/> เงื่อนไขจัดส่งฟรีที่เว็บไซต์เดิมระบุ</span><strong>ครบ ฿10,000 · กรุงเทพฯ/ปริมณฑล</strong></div>
-              <div><span><AppIcon name="map-pin" :size="16"/> ต่างจังหวัดและกรอบขนาดใหญ่</span><strong>ยืนยันค่าขนส่งตามพื้นที่/ขนาด</strong></div>
-              <div><span><AppIcon name="receipt" :size="16"/> ยอดที่แสดงใน checkout</span><strong>ค่าจัดส่งประเมิน ฿80</strong></div>
-              <div><span><AppIcon name="payment" :size="16"/> วิธีชำระเงินในระบบ</span><strong>ปลายทาง · โอนเงิน (ต้องตั้งค่าบัญชี)</strong></div>
-              <div><span><AppIcon name="truck" :size="16"/> เลขติดตามพัสดุ</span><strong>บันทึกโดยทีมงานในเมนูการจัดส่ง</strong></div>
-            </div>
-            <p class="settings-rule-hint"><AppIcon name="alert" :size="15"/> ค่าจัดส่งใน checkout เป็นยอดประมาณการ ยังไม่ตรวจสิทธิ์ส่งฟรีตามจังหวัดอัตโนมัติ ทีมงานควรยืนยันยอดจริงกับลูกค้าก่อนจัดส่ง และตั้งค่าบัญชีรับโอน/ขนส่งก่อนเปิดระบบจริง</p>
+            <div class="settings-section-heading"><span class="settings-section-icon settings-shipping-icon"><AppIcon name="truck" :size="19"/></span><div><h2>การจัดส่งและชำระเงิน</h2><p>กำหนดช่องทางที่ลูกค้าเห็นในหน้า checkout</p></div></div>
+            <form class="admin-form settings-form" @submit.prevent="saveSettings">
+              <div class="settings-subsection"><strong>ตัวเลือกการจัดส่ง</strong><small>ราคาเป็นค่าประมาณ ลูกค้าจะเห็นหมายเหตุให้ร้านยืนยันยอดจริง</small></div>
+              <div class="settings-config-grid">
+                <label class="settings-toggle"><input v-model="form.companyTruckEnabled" type="checkbox"><span><strong>เปิดรถขนส่งของร้าน</strong><small>เลือกจัดส่งโดยรถบริษัทได้ใน checkout</small></span></label>
+                <label class="field-label">ค่ารถบริษัท (บาท)<input v-model.number="form.companyTruckFee" type="number" min="0" max="100000" step="1"></label>
+                <label class="field-label">ยอดส่งฟรีในกรุงเทพฯ/ปริมณฑล (บาท)<input v-model.number="form.companyTruckFreeThreshold" type="number" min="0" max="100000" step="1"><small>ตั้ง 0 เพื่อไม่ใช้เกณฑ์ส่งฟรี</small></label>
+                <label class="settings-toggle"><input v-model="form.privateCarrierEnabled" type="checkbox"><span><strong>เปิดบริษัทขนส่งเอกชน</strong><small>ใช้ขนส่งพัสดุสำหรับพื้นที่ต่าง ๆ</small></span></label>
+                <label class="field-label">ค่าขนส่งเอกชนโดยประมาณ (บาท)<input v-model.number="form.privateCarrierFee" type="number" min="0" max="100000" step="1"></label>
+              </div>
+
+              <div class="settings-subsection"><strong>PromptPay QR</strong><small>QR จะระบุยอดคำสั่งซื้อ และแสดงหลังยืนยัน checkout</small></div>
+              <div class="settings-config-grid">
+                <label class="settings-toggle settings-config-wide"><input v-model="form.promptPayEnabled" type="checkbox"><span><strong>เปิดรับชำระผ่าน PromptPay</strong><small>ระบบจะสร้าง QR แบบระบุยอดโดยอัตโนมัติ</small></span></label>
+                <label class="field-label settings-config-wide">PromptPay ID<input v-model="form.promptPayId" inputmode="numeric" maxlength="32" placeholder="เบอร์มือถือ 10 หลัก, เลขประจำตัว/ภาษี 13 หลัก หรือ e-Wallet 15 หลัก"><small>ใส่เฉพาะ ID ของร้าน ไม่ต้องใส่รหัสลับหรือ PIN</small></label>
+              </div>
+
+              <div class="settings-subsection"><strong>โอนเงินผ่านธนาคาร</strong><small>ข้อมูลบัญชีด้านล่างจะแสดงให้ลูกค้าทราบหลังสั่งซื้อ</small></div>
+              <div class="settings-config-grid">
+                <label class="settings-toggle settings-config-wide"><input v-model="form.bankTransferEnabled" type="checkbox"><span><strong>เปิดรับโอนเงิน</strong><small>สถานะชำระเงินยังต้องให้เจ้าหน้าที่ตรวจสอบ</small></span></label>
+                <label class="field-label">ชื่อธนาคาร<input v-model="form.bankName" maxlength="120" placeholder="ธนาคาร"></label>
+                <label class="field-label">ชื่อบัญชี<input v-model="form.bankAccountName" maxlength="160" placeholder="ชื่อบัญชีผู้รับเงิน"></label>
+                <label class="field-label settings-config-wide">เลขที่บัญชี<input v-model="form.bankAccountNumber" maxlength="80" inputmode="numeric" placeholder="เลขที่บัญชีสำหรับรับโอน"></label>
+              </div>
+
+              <div class="settings-subsection"><strong>ช่องทางอื่น</strong><small>เช่น e-wallet หรือบริการชำระเงินที่ร้านจัดการเอง</small></div>
+              <div class="settings-config-grid">
+                <label class="settings-toggle settings-config-wide"><input v-model="form.otherPaymentEnabled" type="checkbox"><span><strong>เปิดช่องทางชำระเงินอื่น</strong><small>ระบุชื่อช่องทางและขั้นตอนให้ลูกค้าทำตาม</small></span></label>
+                <label class="field-label">ชื่อช่องทาง<input v-model="form.otherPaymentName" maxlength="100" placeholder="เช่น e-Wallet"></label>
+                <label class="field-label">ลิงก์ชำระเงิน (ไม่บังคับ)<input v-model="form.otherPaymentUrl" type="url" maxlength="500" placeholder="https://..."></label>
+                <label class="field-label settings-config-wide">คำแนะนำการชำระ<textarea v-model="form.otherPaymentInstructions" rows="3" maxlength="1000" placeholder="แจ้งขั้นตอนการชำระเงินและวิธีส่งหลักฐาน"></textarea></label>
+              </div>
+              <p class="settings-rule-hint"><AppIcon name="shield" :size="15"/> PromptPay ID และบัญชีธนาคารจะถูกแสดงแก่ลูกค้าโดยตั้งใจ แต่ไม่เก็บข้อมูลลับในหน้าตั้งค่านี้ การยืนยันยอดยังเป็นแบบเจ้าหน้าที่จนกว่าจะเชื่อมต่อ gateway/webhook จริง</p>
+              <p v-if="formError" class="form-error"><AppIcon name="alert" :size="16"/> {{ formError }}</p>
+              <div class="settings-save-row"><span><AppIcon name="shield" :size="15"/> ค่าชำระเงินและจัดส่ง{{ data?.demo ? ' ชั่วคราวในโหมดสาธิต' : ' บันทึกในฐานข้อมูล' }}</span><button class="button button-primary" type="submit" :disabled="saving"><AppIcon :name="saving ? 'loader' : 'save'" :size="16" :class="{ spinning: saving }"/> {{ saving ? 'กำลังบันทึก...' : 'บันทึกช่องทาง' }}</button></div>
+            </form>
           </section>
         </div>
         <aside class="settings-side-column">

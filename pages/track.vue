@@ -11,7 +11,7 @@ async function findOrder() {
   result.value = null
   loading.value = true
   try {
-    const response = await $fetch<{ order: any }>('/api/track', { query: { orderNo: orderNo.value.trim(), phone: phone.value.trim() } })
+    const response = await $fetch<{ order: any }>('/api/track', { method: 'POST', body: { orderNo: orderNo.value.trim(), phone: phone.value.trim() } })
     result.value = response.order
   } catch (error: any) {
     errorMessage.value = error?.data?.statusMessage || 'ไม่พบคำสั่งซื้อ กรุณาตรวจสอบข้อมูลอีกครั้ง'

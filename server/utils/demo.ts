@@ -33,6 +33,8 @@ export interface DemoOrder {
   status: string
   paymentStatus: string
   paymentMethod: string
+  shippingMethod?: string
+  shippingZone?: string
   subtotal: number
   shippingFee: number
   total: number

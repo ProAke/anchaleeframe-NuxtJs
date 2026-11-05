@@ -37,9 +37,10 @@ export function useCart() {
     }, { deep: true })
   }
 
+  const { data: storeSettings } = useFetch<any>('/api/store-settings', { key: 'af-store-settings', server: false, retry: false })
   const count = computed(() => lines.value.reduce((total, line) => total + line.quantity, 0))
   const subtotal = computed(() => lines.value.reduce((total, line) => total + Number(line.product.price) * line.quantity, 0))
-  const shippingFee = computed(() => subtotal.value === 0 ? 0 : 80)
+  const shippingFee = computed(() => subtotal.value === 0 ? 0 : Number(storeSettings.value?.settings?.privateCarrierFee ?? 120))
   const total = computed(() => subtotal.value + shippingFee.value)
 
   function add(product: CartProduct, amount = 1) {

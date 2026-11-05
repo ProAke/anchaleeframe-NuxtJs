@@ -19,6 +19,9 @@ export default defineNuxtConfig({
     databasePassword: process.env.NUXT_DATABASE_PASSWORD || '',
     adminEmail: process.env.NUXT_ADMIN_EMAIL || 'admin@anchaleeframe.com',
     adminPassword: process.env.NUXT_ADMIN_PASSWORD || '',
+    lineLoginChannelId: process.env.NUXT_LINE_LOGIN_CHANNEL_ID || '',
+    lineLoginChannelSecret: process.env.NUXT_LINE_LOGIN_CHANNEL_SECRET || '',
+    lineLoginRedirectUri: process.env.NUXT_LINE_LOGIN_REDIRECT_URI || '',
     public: {
       siteName: 'อัญชลีกรอบรูป',
     },

@@ -15,3 +15,14 @@ export const paymentStatusLabels: Record<string, string> = {
   paid: 'ชำระแล้ว',
   refunded: 'คืนเงินแล้ว',
 }
+export const paymentMethodLabels: Record<string, string> = {
+  cod: 'เก็บเงินปลายทาง',
+  promptpay_qr: 'PromptPay QR',
+  bank_transfer: 'โอนเงินผ่านธนาคาร',
+  transfer: 'โอนเงินผ่านธนาคาร',
+  other: 'ช่องทางอื่น',
+}
+export const shippingMethodLabels: Record<string, string> = {
+  company_truck: 'รถขนส่งของร้าน',
+  private_carrier: 'บริษัทขนส่งเอกชน',
+}

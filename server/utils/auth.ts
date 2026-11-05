@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
 import bcrypt from 'bcryptjs'
-import { deleteCookie, getCookie, setCookie, type H3Event } from 'h3'
+import { deleteCookie, getCookie, setCookie, setResponseHeader, type H3Event } from 'h3'
 import { databaseConfigured, demoDataAllowed, getDatabase } from './db'
 
 const COOKIE_NAME = 'af_admin_session'
@@ -82,6 +82,7 @@ export async function getAdminSession(event: H3Event): Promise<AdminUser | null>
 }
 
 export async function requireAdmin(event: H3Event): Promise<AdminUser> {
+  setResponseHeader(event, 'Cache-Control', 'no-store')
   if (!databaseConfigured() && !demoAllowed()) throw createError({ statusCode: 503, statusMessage: 'กรุณาตั้งค่าฐานข้อมูลก่อนใช้งานระบบจัดการ' })
   try {
     const user = await getAdminSession(event)

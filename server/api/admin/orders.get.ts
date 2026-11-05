@@ -21,7 +21,8 @@ export default defineEventHandler(async (event) => {
   if (search) { conditions.push('(LOWER(o.order_no) LIKE ? OR LOWER(o.shipping_name) LIKE ? OR o.shipping_phone LIKE ?)'); params.push(`%${search}%`, `%${search}%`, `%${search}%`) }
   const [rows] = await db.query<any[]>(
     `SELECT o.id, o.order_no AS orderNo, o.customer_id AS customerId, o.status,
-            o.payment_status AS paymentStatus, o.payment_method AS paymentMethod, o.subtotal,
+            o.payment_status AS paymentStatus, o.payment_method AS paymentMethod,
+            o.shipping_method AS shippingMethod, o.shipping_zone AS shippingZone, o.subtotal,
             o.shipping_fee AS shippingFee, o.total, o.shipping_name AS shippingName,
             o.shipping_phone AS shippingPhone, o.shipping_address AS shippingAddress, o.note,
             o.created_at AS createdAt, c.email AS customerEmail
